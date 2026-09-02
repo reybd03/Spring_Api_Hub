@@ -26,7 +26,7 @@ public class WebController {
 
     @GetMapping("/")
     public Mono<String> index(Model model) {
-        model = getEndpointsToModel(model);
+        // model = getEndpointsToModel(model);
 
         return Mono.just("index");
     }

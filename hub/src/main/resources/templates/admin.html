@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}">Pages</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}" type="text/css">
+</head>
+
+<body>
+    <h1>Admin Page</h1>
+    <nav class="navbar">
+        <ul id="nav-list">
+            <li th:each="navItem : ${navItems}">
+                <a th:href="${navItem.path}" th:text="${navItem.title}"></a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- The button element with an explicit action type and ID for JavaScript targeting -->
+    <button id="theme-toggle" type="button" aria-label="Toggle color theme">
+        Toggle Theme
+    </button>
+
+
+    <section id="sqlActions">
+
+
+        <!-- <form action="#" th:action="@{/admin/create-table}" method="post"> -->
+        <form id="create">
+            <label>Table Name:</label>
+            <input type="text" name="tableName" placeholder="tableName" required/>
+            <button type="submit" id="create-table">Create Table</button>
+        </form>
+        <br/>
+        <!-- <form th:action="@{/admin/query-table}" method="post"> -->
+        <form id="query">
+            <label>Table Name to Query:</label>
+            <input type="text" name="tableName" placeholder="tableName" />
+            <button type="submit" id="query-table">Query Table</button>
+        </form>
+        <br/>
+        <!-- <form action="#" th:action="@{/admin/drop-table}" method="post"> -->
+        <form id="drop">
+            <label>Table Name to Drop:</label>
+            <input type="text" name="tableName" placeholder="tableName" required/>
+            <button type="submit" id="drop-table">Drop Table</button>
+        </form>
+    </section>
+    <section id="sqlResults">
+        <div id="results-table">
+            <h2 th:text=${tableResults}>Table Results</h2>
+            <table th:if="${rows}">
+                <tr th:if="!${rows.isEmpty()}">
+                    <th th:each="col : ${rows[0].keySet()}" th:text="${col}"></th>
+                </tr>
+                <tr th:each="row : ${rows}">
+                    <td th:each="val : ${row.values()}" th:text="${val}"></td>
+                </tr>
+            </table>
+        </div>
+    
+    <div id="results-message" style="color: green;" th:text="${message}">Database Response</div>
+    <div id="results-error" style="color: red;" th:text="${error}">Error Message</div>
+    <!-- Links to src/main/resources/static/js/*.js -->
+    <script th:src="@{/js/main.js}" type="text/javascript"></script>
+    <script th:src="@{/js/database.js}" type="text/javascript"></script>
+</body>
+
+</html>

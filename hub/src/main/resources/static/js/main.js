@@ -1,4 +1,4 @@
-const parentList = document.getElementById('ProductList');
+const parentList = document.getElementById('nav-list');
 const listItems = parentList.querySelectorAll('li');
 
 let target = "Home"

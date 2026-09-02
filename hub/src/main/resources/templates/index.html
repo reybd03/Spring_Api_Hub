@@ -9,12 +9,13 @@
 
 <body>
     <h1>API Hub</h1>
-    <h2>Products</h2>
-    <ul id="ProductList">
-    <li th:each="endpoint, iterStat : ${endpoints}">
-        <a th:href="${endpoint}" th:text="${endpoints_text[iterStat.index]}"></a>
-    </li>
-    </ul>
+    <nav class="navbar">
+        <ul id="nav-list">
+            <li th:each="navItem : ${navItems}">
+                <a th:href="${navItem.path}" th:text="${navItem.title}"></a>
+            </li>
+        </ul>
+    </nav>
 
     <!-- The button element with an explicit action type and ID for JavaScript targeting -->
     <button id="theme-toggle" type="button" aria-label="Toggle color theme">

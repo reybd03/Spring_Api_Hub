@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'war'
 }
 
 group = 'com.spring.api'
@@ -22,16 +23,46 @@ ext {
 }
 
 dependencies {
+	// For Full Profile (All specs)
+	// Full Jakarta EE Profile (No Spring MVC/Web)
+    providedCompile 'jakarta.platform:jakarta.jakartaee-api:11.0.0'
+
+	// Jackson for JSON
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+	
+	// Spring Data JPA starter kit
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // Spring Data JPA (Blocking)
+	// implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc' // Spring Data R2DBC (Reactive)
+
+	// Database Driver (Example: PostgreSQL, replace with H2, MySQL, etc.)
+    runtimeOnly 'com.mysql:mysql-connector-j' // Standard JDBC driver (blocking)
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc' // Database Connection (Blocking)
+	// implementation 'io.asyncer:r2dbc-mysql:1.4.3'// Reactive MySQL driver
+
+	// Apache Commons Lang
 	implementation 'org.apache.commons:commons-lang3:3.17.0'
-	// implementation 'org.springframework.boot:spring-boot-starter-kafka'
-	// implementation 'org.springframework.boot:spring-boot-starter-restclient'
-	// implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Lombok
+	compileOnly("org.projectlombok:lombok:1.18.46")
+	annotationProcessor("org.projectlombok:lombok:1.18.46")
+	
+	// Thymeleaf, WebClient, WebFlux
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-webclient'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+
+	testCompileOnly("org.projectlombok:lombok:1.18.46")
+	testAnnotationProcessor("org.projectlombok:lombok:1.18.46")
+	// implementation 'org.springframework.boot:spring-boot-starter-kafka'
+	// implementation 'org.springframework.boot:spring-boot-starter-restclient'
+	// implementation 'org.springframework.boot:spring-boot-starter-web'
+	
 	// implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	//implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
-	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
+	
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	// developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

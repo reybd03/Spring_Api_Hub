@@ -9,21 +9,98 @@
 </head>
 
 <body>
-    <h1 th:text="${title}">Pages</h1>
+    <div id="header">
+        <h1 th:text="${title}">Pages</h1>
+        <nav class="navbar">
+            <ul id="nav-list">
+                <li th:each="navItem : ${navItems}">
+                    <a th:href="${navItem.path}" th:text="${navItem.title}"></a>
+                </li>
+            </ul>
+        </nav>
 
-    <h2>Products</h2>
-    <ul id="ProductList">
-    <li th:each="endpoint, iterStat : ${endpoints}">
-        <a th:href="${endpoint}" th:text="${endpoints_text[iterStat.index]}"></a>
-    </li>
-    </ul>
+        <!-- The button element with an explicit action type and ID for JavaScript targeting -->
+        <button id="theme-toggle" type="button" aria-label="Toggle color theme">
+            Toggle Theme
+        </button>
+    </div>
+    
+    <div id="content">
+        <section>
+            <!-- <tr th:each="product : ${productDetails}">
+                <td th:text="${product.ProductName}">Product Name</td>
+                <td th:text="${product.ProductDiscovered}">Product Discovered</td>
+                <td th:text="${product.ProductDiscoveryStatus}">Product Discovery Status</td>
+                <td th:text="${product.ProductBasePath}">Product Base Path</td>
+                <td th:text="${product.ProductUserName}">Product User Name</td>
+                <td th:text="${product.ProductPassword}">Product Password</td>
+                <td th:text="${product.ProductAPIKey}">Product API Key</td>
+                <td th:text="${product.ProductURL}">Product URL</td>
+                <td th:text="${product.ProductPort}">Product Port</td>
+                
+            </tr> -->
+            
+            <ul id="product-fields">
+                <li>Product Name: <span id="productName"></span></li>
+                <li>Product Discovered: <span id="productDiscovered"></span></li>
+                <li>Product Discovery Status: <span id="productDiscoveryStatus"></span></li>
+                <li>Product Base Path: <span id="ProductBasePath"></span> <button
+                        id="updateProductBasePath">Update</button></li>
+                <li>Product User Name: <span id="ProductUserName"></span> <button
+                        id="updateProductUserName">Update</button></li>
+                <li>Product Password: <span id="ProductPassword"></span> <button
+                        id="updateProductPassword">Update</button></li>
+                <li>Product API Key: <span id="ProductAPIKey"></span> <button
+                        id="updateProductAPIKey">Update</button></li>
+                <li>Product URL: <span id="ProductURL"></span> <button
+                        id="updateProductURL">Update</button></li>
+                <li>Product Port: <span id="ProductPort"></span> <button
+                        id="updateProductPort">Update</button></li>
+                
+            </ul>
+        </section>
+    </div>
 
-    <!-- The button element with an explicit action type and ID for JavaScript targeting -->
-    <button id="theme-toggle" type="button" aria-label="Toggle color theme">
-        Toggle Theme
-    </button>
+    <section id="performance-stats">
+        <!-- Real Time Performance Cards -->
+        <div class="card">
+            <h2>Live System Telemetry</h2>
+            <p>Host Total CPU Usage: <span id="systemCpuLoad-display" class="metric-val">0.00</span></p>
+            <p>Host Process CPU Usage: <span id="processCpuLoad-display" class="metric-val">0.00</span></p>
+            <p>Host Total Memory: <span id="totalMemory-display" class="metric-val">0.00</span></p>
+            <p>Host Free Memory: <span id="freeMemory-display" class="metric-val">0.00</span></p>
+            <p>Host Used Memory: <span id="usedMemory-display" class="metric-val">0.00</span></p>
+        </div>
+
+        <!-- Devops Controls -->
+        <div class="card">
+            <h2>Docker Orchestration</h2>
+            <button class="btn btn-start" onclick="sendControl('docker', 'start')">Start Container</button>
+            <button class="btn btn-stop" onclick="sendControl('docker', 'stop')">Stop Container</button>
+        </div>
+
+        <div class="card">
+            <h2>Jenkins Master Process</h2>
+            <button class="btn btn-start" onclick="sendControl('jenkins', 'start')">Start Jenkins</button>
+            <button class="btn btn-stop" onclick="sendControl('jenkins', 'stop')">Shutdown Jenkins</button>
+            <button class="btn btn-stop" onclick="sendControl('jenkins', 'restart')">Restart Jenkins</button>
+        </div>
+    </section>
+    <div id="log-output" style="color: #aaa; font-style: italic;"></div>
+    
     <!-- Links to src/main/resources/static/js/*.js -->
     <script th:src="@{/js/main.js}" type="text/javascript"></script>
+    <script th:src="@{/js/products.js}" type="text/javascript"></script>
+    <!-- <script type="text/javascript">
+        const eventSource = new EventSource('/products/automation/jenkins');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            // Dynamically update the DOM/HTML page with JavaScript
+            document.getElementById("product").innerText = data;
+        };
+    </script> -->
+    <!-- <script th:src="@{/js/updateFields.js}" type="text/javascript"></script> -->
 </body>
 
 </html>

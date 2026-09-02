@@ -21,8 +21,23 @@ body {
     font-family: sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
     padding: 2rem;
+    display: flex;
+    flex-wrap: wrap;
 }
 
+#header {
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 50px;
+    width: 60%;
+
+}
+
+#content {
+    flex: 1;
+    flex-basis: 50%;
+    
+}
 /* 4. Simple toggle button styling */
 #theme-toggle {
     position: absolute;
@@ -45,10 +60,24 @@ h1 {
 h2 {
     margin-left: 60px;
 }
-
-#ProductList {
+#nav-list {
+    list-style-type: none;
+    
+}
+#product-fields {
     list-style-type: none;
     margin-left: 30px;
+}
+
+#performance-stats {
+    width: 400px; /* Standard sidebar width */
+    flex-shrink: 0; /* Prevents the sidebar from getting squished */
+    padding: 20px;
+    /* border-radius: 8px; */
+}
+div.card {
+    margin-left: auto;
+    padding: 0.5rem 1rem;
 }
 
 /* 1. Unvisited link */
