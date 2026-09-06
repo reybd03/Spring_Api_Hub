@@ -6,6 +6,7 @@ import com.spring.api.hub.products.automation.AutomationRepository;
 import java.util.Map;
 import java.time.Duration;
 import java.lang.management.ManagementFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.codec.ServerSentEvent;
 
@@ -28,6 +29,9 @@ public class AutomationService {
     private final AutomationRepository automationRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // Replay the last element to new subscribers, backpressure handling included
+    private final Sinks.Many<String> hotSink = Sinks.many().multicast().onBackpressureBuffer();
+
     AutomationService(AutomationRepository automationRepository) {
         this.automationRepository = automationRepository;
     }
@@ -39,6 +43,11 @@ public class AutomationService {
             Runtime runtime = Runtime.getRuntime();
 
             Map<String, Object> metrics = new java.util.HashMap<>();
+
+            // Service Uptime
+            long startTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+            long uptime = System.currentTimeMillis() - startTime;
+            metrics.put("uptime", formatDuration(uptime));
 
             // System CPU Usage
             double systemCpuLoad = osBean.getCpuLoad();
@@ -88,6 +97,14 @@ public class AutomationService {
         return String.format("%.2f %s", bytes / Math.pow(1024, exp), units[exp]);
     }
 
+    private String formatDuration(long millis) {
+        long days = TimeUnit.MILLISECONDS.toDays(millis);
+        long hours = TimeUnit.MILLISECONDS.toHours(millis) % 24;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
+        return String.format("%02d:%02d:%02d:%02d", days, hours, minutes, seconds);
+    }
+
     /**
      * Helper method to create a Server-Sent Event stream
      * 
@@ -121,6 +138,35 @@ public class AutomationService {
         automationEntity.setProductFunctions(product.getProductFunctions());
         automationEntity.setProductActions(product.getProductActions());
 
+        automationEntity = automationRepository.save(automationEntity);
+        return automationEntity;
+    }
+
+    public AutomationEntity updateAutomationEntity(AutomationEntity automationEntity, String updateKey,
+            String updateValue) {
+        switch (updateKey) {
+            case "productBasePath":
+                automationEntity.setProductBasePath(updateValue);
+                break;
+            case "productURL":
+                automationEntity.setProductURL(updateValue);
+                break;
+            case "productPort":
+                automationEntity.setProductPort(updateValue);
+                break;
+            case "productUserName":
+                automationEntity.setProductUserName(updateValue);
+                break;
+            case "productPassword":
+                automationEntity.setProductPassword(updateValue);
+                break;
+            case "productAPIKey":
+                automationEntity.setProductAPIKey(updateValue);
+                break;
+            default:
+                System.out.println("Unknown update key: " + updateKey);
+                break;
+        }
         automationEntity = automationRepository.save(automationEntity);
         return automationEntity;
     }

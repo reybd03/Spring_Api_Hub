@@ -1,8 +1,5 @@
 package com.spring.api.hub.web;
 
-import com.spring.api.hub.web.NavItem;
-
-import java.util.Collections;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -22,7 +19,8 @@ public class NavigationService {
                 .flatMap(entry -> entry.getKey().getPatternsCondition().getPatterns().stream())
                 // 3. Clean up patterns (skip APIs, static elements, and wildcards)
                 .map(pathPattern -> pathPattern.getPatternString())
-                .filter(path -> !path.startsWith("/api") && !path.contains("{") && !path.equals("/error"))
+                .filter(path -> !path.startsWith("/api") && !path.contains("{") && !path.equals("/error")
+                        && !path.contains("stream"))
                 // 4. Map string paths to your NavItem record
                 .map(path -> {
                     String title = path.equals("/") ? "Home" : capitalize(path.substring(1));

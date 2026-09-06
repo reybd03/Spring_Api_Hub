@@ -43,6 +43,15 @@ public class Jenkins {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
     }
 
+    private AutomationEntity fetchJenkinsEntity() {
+        Optional<AutomationEntity> jenkinsEntityOptional = automationRepository.findByProductName(productName);
+        if (jenkinsEntityOptional.isPresent()) {
+            return jenkinsEntityOptional.get();
+        } else {
+            return null;
+        }
+    }
+
     public AutomationEntity verifyJenkinsEntity(AutomationEntity jenkinsEntity) {
         Optional<AutomationEntity> jenkinsEntityOptional = automationRepository.findByProductName(productName);
         // automationService.prettyPrintEntity(jenkinsEntityOptional.get());
@@ -57,15 +66,80 @@ public class Jenkins {
             jenkinsEntity = automationService.createAutomationEntity(jenkinsEntity);
         }
 
+        // automationService.prettyPrintEntity(jenkinsEntity);
+        return jenkinsEntity;
+    }
+
+    public AutomationEntity discoverJenkins(AutomationEntity jenkinsEntity) {
+        JenkinsDiscovery jenkinsDiscovery = new JenkinsDiscovery();
+        String jenkinsBasePath = jenkinsDiscovery.defaultJenkinsPaths();
+        if (!jenkinsBasePath.equals("Not Found")) {
+            jenkinsEntity.setProductBasePath(jenkinsBasePath);
+            jenkinsEntity.setProductDiscovered(true);
+            jenkinsEntity = automationRepository.save(jenkinsEntity);
+        } else if (jenkinsEntity.getProductDiscoveryStatus().equals("Pending_Discovery")) {
+            jenkinsEntity.setProductDiscoveryStatus("Failed");
+            jenkinsEntity.setProductDiscovered(false);
+            jenkinsEntity = automationRepository.save(jenkinsEntity);
+        }
         automationService.prettyPrintEntity(jenkinsEntity);
         return jenkinsEntity;
     }
 
-    public void discoverJenkins(AutomationEntity jenkinsEntity) {
+    public AutomationEntity discoverJenkins(AutomationEntity jenkinsEntity, String basePath) {
+        JenkinsDiscovery jenkinsDiscovery = new JenkinsDiscovery();
+        String jenkinsBasePath = jenkinsDiscovery.updatedJenkinsBasePath(basePath);
 
+        jenkinsEntity.setProductDiscoveryStatus("Discovering");
+        jenkinsEntity = automationRepository.save(jenkinsEntity);
+
+        if (!jenkinsBasePath.equals("Not Found")) {
+            jenkinsEntity.setProductBasePath(jenkinsBasePath);
+            jenkinsEntity.setProductDiscovered(true);
+            jenkinsEntity.setProductDiscoveryStatus("Completed");
+            jenkinsEntity = automationRepository.save(jenkinsEntity);
+        } else if (jenkinsEntity.getProductDiscoveryStatus().equals("Discovering")) {
+            jenkinsEntity.setProductDiscoveryStatus("Failed");
+            jenkinsEntity.setProductDiscovered(false);
+            jenkinsEntity = automationRepository.save(jenkinsEntity);
+        }
+        automationService.prettyPrintEntity(jenkinsEntity);
+        return jenkinsEntity;
     }
 
-    public void discoverJenkins(AutomationEntity jenkinsEntity, String basePath) {
+    public String unpackJenkinsMap(Map<String, String> updateMap) {
+        AutomationEntity jenkinsEntity = fetchJenkinsEntity();
+        String updateKey = updateMap.keySet().stream().findFirst().orElse("Invalid_Key");
+        String updateValue = updateMap.getOrDefault(updateKey, "Invalid_Value");
+
+        jenkinsEntity.setProductDiscoveryStatus("Pending_Discovery");
+        jenkinsEntity = automationRepository.save(jenkinsEntity);
+
+        switch (updateKey) {
+            case "productBasePath":
+                jenkinsEntity = discoverJenkins(jenkinsEntity, updateValue);
+                break;
+            // case "productURL":
+            // automationEntity.setProductURL(updateValue);
+            // break;
+            // case "productPort":
+            // automationEntity.setProductPort(updateValue);
+            // break;
+            // case "productUserName":
+            // automationEntity.setProductUserName(updateValue);
+            // break;
+            // case "productPassword":
+            // automationEntity.setProductPassword(updateValue);
+            // break;
+            // case "productAPIKey":
+            // automationEntity.setProductAPIKey(updateValue);
+            // break;
+            default:
+                System.out.println("Unknown update key: " + updateKey);
+                break;
+        }
+
+        return updateKey;
 
     }
 
@@ -73,9 +147,9 @@ public class Jenkins {
         AutomationEntity jenkinsEntity = new AutomationEntity();
         jenkinsEntity.setProductName(productName);
         jenkinsEntity = verifyJenkinsEntity(jenkinsEntity);
-
-        discoverJenkins(jenkinsEntity);
-
+        if (!jenkinsEntity.getProductDiscovered()) {
+            jenkinsEntity = discoverJenkins(jenkinsEntity);
+        }
         return jenkinsEntity;
     }
 

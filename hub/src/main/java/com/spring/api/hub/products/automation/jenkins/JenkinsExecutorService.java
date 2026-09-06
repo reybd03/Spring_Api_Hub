@@ -1,6 +1,5 @@
 package com.spring.api.hub.products.automation.jenkins;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.spring.api.hub.WebController;
@@ -11,6 +10,11 @@ public class JenkinsExecutorService {
 
     public JenkinsExecutorService(WebController webController) {
         this.webController = webController;
+    }
+
+    public void actionGateway(String target, String action) {
+        System.out.println("Target: " + target);
+        System.out.println("Action: " + action);
     }
 
 }

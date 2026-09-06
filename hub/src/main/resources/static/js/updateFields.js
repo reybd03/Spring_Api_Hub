@@ -1,18 +1,23 @@
 const productFields = document.getElementById("product-fields");
 
 // Get the complete URL
-const currentUrl = window.location.href;
+//const currentUrl = window.location.href;
 
-const apiTarget = currentUrl.indexOf("/products");
-const apiEndpoint = currentUrl !== -1 ? currentUrl.substring(apiTarget) : currentUrl;
-console.log(apiEndpoint);
+// const apiTarget = currentUrl.indexOf("/products");
+//const apiEndpoint = currentUrl !== -1 ? currentUrl.substring(apiTarget) : currentUrl;
+// console.log(apiEndpoint);
 
 productFields.addEventListener("click", (button) => {
-    if (button.target.tagName === "BUTTON") {
+    if (button.target.tagName === "BUTTON" && button.target.id.includes("update")) {
         console.log("ID: " + button.target.id + " Target: " + button.target.innerHTML);
-        const fieldId = button.target.id.replace("update", "");
+        const removePrefix = button.target.id.replace("update", "")
+        const fieldId = `${removePrefix.charAt(0).toLowerCase()}${removePrefix.slice(1)}`;
         const fieldElement = document.getElementById(fieldId);
+        // const result = `${fieldId.charAt(0).toLowerCase()}${fieldId.slice(1)}`;
+        // console.log("Query Selector for " + fieldId + ": " + document.querySelector("#" + fieldId));
+        // console.log("Element " + fieldElement);
         const fieldValue = fieldElement.textContent;
+        // console.log("Field Value " + fieldValue);
         const newFieldValue = prompt("Enter new value for " + fieldId + ":", fieldValue);
         // button.target.style.display = "none";
         // Needs to group UserName and Password together and require both to be changed together
@@ -37,7 +42,7 @@ async function updateProductField(fieldId, fieldValue) {
         [fieldId]: fieldValue
     };
     console.log(payload);
-    fetch(apiEndpoint, {
+    fetch(apiEndpoint + "/updateConfigs?" + fieldId + "=" + fieldValue, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
