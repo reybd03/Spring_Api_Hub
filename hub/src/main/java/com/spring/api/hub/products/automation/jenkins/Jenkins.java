@@ -14,7 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-import com.spring.api.hub.products.automation.AutomationStateEvent;
+import com.spring.api.hub.products.automation.AutomationActions;
 import com.spring.api.hub.products.automation.jenkins.JenkinsDiscovery;
 // import com.spring.api.hub.products.automation.AutomationHandler;
 import com.spring.api.hub.products.automation.AutomationRepository;
@@ -43,7 +43,7 @@ public class Jenkins {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
     }
 
-    private AutomationEntity fetchJenkinsEntity() {
+    protected AutomationEntity fetchJenkinsEntity() {
         Optional<AutomationEntity> jenkinsEntityOptional = automationRepository.findByProductName(productName);
         if (jenkinsEntityOptional.isPresent()) {
             return jenkinsEntityOptional.get();
@@ -97,8 +97,9 @@ public class Jenkins {
             jenkinsEntity.setProductBasePath(jenkinsBasePath);
             jenkinsEntity.setProductDiscovered(true);
             jenkinsEntity.setProductDiscoveryStatus("Completed");
+            jenkinsEntity.setProductStatus("Stopped");
             jenkinsEntity = automationRepository.save(jenkinsEntity);
-        } else if (jenkinsEntity.getProductDiscoveryStatus().equals("Discovering")) {
+        } else {
             jenkinsEntity.setProductDiscoveryStatus("Failed");
             jenkinsEntity.setProductDiscovered(false);
             jenkinsEntity = automationRepository.save(jenkinsEntity);

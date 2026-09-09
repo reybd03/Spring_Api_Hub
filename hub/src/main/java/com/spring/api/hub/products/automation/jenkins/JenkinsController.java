@@ -124,7 +124,7 @@ public class JenkinsController {
         System.out.println("Target: " + target);
         System.out.println("Action: " + action);
 
-        jenkinsExecutorService.actionGateway(target, action);
+        String result = jenkinsExecutorService.actionGateway(target, action);
 
         return actionOperation
                 .then(Mono.just(Map.of("status", "Success", "message", "Jenkins actions executed.")))

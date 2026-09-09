@@ -34,9 +34,10 @@ public class AutomationEntity {
     private String productAPIKey = "Not Found";
     private String productURL = "Not Found";
     private String productPort = "Not Found";
-    private String productStatus = "Unknown";
+    private Long productProcessId = -1L;
+    private String productStatus = "Unknown"; // Running, Stopped, Starting, Stopping, Restarting, Unknown, Failed
     private String productFunctions = "Unknown"; // Functions of product e.g. Build, Test, Deploy
-    private String productActions = "Unknown"; // Actions of product e.g. Start, Stop, Restart
+    private String productActions = "Unknown"; // Actions of product e.g. Nodes, Jobs, Pipelines, etc
 
     // public Long getId() {
     // return id;
