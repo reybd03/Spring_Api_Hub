@@ -52,6 +52,10 @@ public class JenkinsExecutorService {
 
         List<String> command = new ArrayList<>();
 
+        if (!automationActions.isProcessRunning(jenkinsName)) {
+            jenkinsEntity.setProductStatus("Stopped");
+        }
+
         switch (jenkinsStatus) {
             case "Stopped", "Unknown", "Failed" -> {
                 command.add("docker");

@@ -35,12 +35,14 @@ public class Jenkins {
     private final AutomationRepository automationRepository;
     private final AutomationService automationService;
     private final WebClient webClient;
+    private final AutomationActions automationActions;
 
     public Jenkins(AutomationRepository automationRepository, AutomationService automationService,
-            WebClient.Builder webClientBuilder) {
+            WebClient.Builder webClientBuilder, AutomationActions automationActions) {
         this.automationRepository = automationRepository;
         this.automationService = automationService;
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
+        this.automationActions = automationActions;
     }
 
     protected AutomationEntity fetchJenkinsEntity() {
@@ -76,6 +78,10 @@ public class Jenkins {
         if (!jenkinsBasePath.equals("Not Found")) {
             jenkinsEntity.setProductBasePath(jenkinsBasePath);
             jenkinsEntity.setProductDiscovered(true);
+            jenkinsEntity.setProductDiscoveryStatus("Completed");
+            if (!automationActions.isProcessRunning(productName)) {
+                jenkinsEntity.setProductStatus("Stopped");
+            }
             jenkinsEntity = automationRepository.save(jenkinsEntity);
         } else if (jenkinsEntity.getProductDiscoveryStatus().equals("Pending_Discovery")) {
             jenkinsEntity.setProductDiscoveryStatus("Failed");
@@ -97,7 +103,9 @@ public class Jenkins {
             jenkinsEntity.setProductBasePath(jenkinsBasePath);
             jenkinsEntity.setProductDiscovered(true);
             jenkinsEntity.setProductDiscoveryStatus("Completed");
-            jenkinsEntity.setProductStatus("Stopped");
+            if (!automationActions.isProcessRunning(productName)) {
+                jenkinsEntity.setProductStatus("Stopped");
+            }
             jenkinsEntity = automationRepository.save(jenkinsEntity);
         } else {
             jenkinsEntity.setProductDiscoveryStatus("Failed");
@@ -147,6 +155,7 @@ public class Jenkins {
     public AutomationEntity getJenkinsDetails() {
         AutomationEntity jenkinsEntity = new AutomationEntity();
         jenkinsEntity.setProductName(productName);
+
         jenkinsEntity = verifyJenkinsEntity(jenkinsEntity);
         if (!jenkinsEntity.getProductDiscovered()) {
             jenkinsEntity = discoverJenkins(jenkinsEntity);
