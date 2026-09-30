@@ -17,6 +17,7 @@ import org.springframework.ui.Model;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import org.thymeleaf.spring6.context.webflux.IReactiveDataDriverContextVariable;
 import org.thymeleaf.spring6.context.webflux.ReactiveDataDriverContextVariable;
@@ -50,7 +51,7 @@ public class JenkinsController {
     }
 
     private Mono<Map<String, Object>> getJenkinsConfigMono() {
-        return Mono.fromFuture(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+        return Mono.fromCallable(() -> {
             Map<String, Object> jenkinsConfig = new java.util.HashMap<>();
             AutomationEntity jenkinsEntity = jenkins.getJenkinsDetails();
 
@@ -68,68 +69,43 @@ public class JenkinsController {
             jenkinsConfig.put("productURL", jenkinsEntity.getProductURL());
             jenkinsConfig.put("productPort", jenkinsEntity.getProductPort());
             return jenkinsConfig;
-        }));
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
     // Renders the baseline static template
     @GetMapping
     public Mono<String> JenkinsPage(final Model model) {
-        // Fetch product details on page load
-        AutomationEntity jenkinsConfig = jenkins.getJenkinsDetails();
-
-        // Flux<AutomationEntity> flux = jenkins.getProductDetails();
-
-        // automationService.getProductUpdates().log().subscribe(value ->
-        // System.out.println("the value " + value));
-
-        // IReactiveDataDriverContextVariable reactiveJenkins = new
-        // ReactiveDataDriverContextVariable(flux, 1);
-        model.addAttribute("title", "Jenkins");
-        model.addAttribute("jenkinsConfig", jenkinsConfig);
-        // model.addAttribute("productDetails", reactiveJenkins);
-
-        // System.out.println("the model value " + model.asMap());
-
-        return Mono.just("pages");
+        return Mono.fromCallable(() -> jenkins.getJenkinsDetails())
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(jenkinsConfig -> {
+                    model.addAttribute("title", "Jenkins");
+                    model.addAttribute("jenkinsConfig", jenkinsConfig);
+                })
+                .thenReturn("pages");
     }
 
     @PostMapping("/updateConfigs")
     @ResponseBody
     public Mono<Map<String, String>> updateJenkinsProduct(@RequestParam Map<String, String> updateMap) {
-        Mono<Void> updateOperation = Mono.empty();
-
-        // if ("docker".equalsIgnoreCase(target)) {
-        // updateOperation = dockerService.toggleService(action);
-        // } else if ("jenkins".equalsIgnoreCase(target)) {
-        // updateOperation = jenkinsService.toggleService(action);
-        // }
-        String target = jenkins.unpackJenkinsMap(updateMap);
-        // System.out.println("Target: " + target);
-
-        return updateOperation
-                .then(Mono.just(Map.of("status", "Success", "message", target + " executed.")))
+        return Mono.fromCallable(() -> jenkins.unpackJenkinsMap(updateMap))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(target -> Map.of("status", "Success", "message", target + " executed."))
                 .onErrorResume(e -> Mono.just(Map.of("status", "Error", "message", e.getMessage())));
-
-        // return ResponseEntity.ok("{\"message\": \"Received Jenkins Updates!\"}");
     }
 
     // Jenkins Product Actions
     @PostMapping("/actions")
     @ResponseBody
     public Mono<Map<String, String>> jenkinsProductActions(@RequestParam Map<String, String> actionMap) {
-        Mono<Void> actionOperation = Mono.empty();
-
         String target = actionMap.getOrDefault("target", "Invalid_Value");
         String action = actionMap.getOrDefault("action", "Invalid_Value");
         System.out.println("Target: " + target);
         System.out.println("Action: " + action);
 
-        String result = jenkinsExecutorService.actionGateway(target, action);
-
-        return actionOperation
-                .then(Mono.just(Map.of("status", "Success", "message", "Jenkins actions executed.")))
+        return Mono.fromCallable(() -> jenkinsExecutorService.actionGateway(target, action))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(result -> Map.of("status", "Success", "message", "Jenkins actions executed."))
                 .onErrorResume(e -> Mono.just(Map.of("status", "Error", "message", e.getMessage())));
-
     }
 
     // Produces the continuous Server-Sent Event stream for real-time resource data

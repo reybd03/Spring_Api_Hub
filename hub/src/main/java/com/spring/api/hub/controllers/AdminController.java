@@ -39,6 +39,7 @@ public class AdminController {
     @PostMapping("/create-table")
     public String createTable(@RequestParam() String tableName, Model model) {
         try {
+            adminService.validateTableName(tableName);
             String sql = "CREATE TABLE " + tableName
                     + " (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
             jdbcTemplate.execute(sql);
@@ -53,17 +54,14 @@ public class AdminController {
     // Handle Table Querying
     @PostMapping("/query-table")
     public String queryTable(@RequestParam("tableName") String tableName, Model model) {
-        System.out.println(tableName);
         try {
+            adminService.validateTableName(tableName);
             List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT * FROM " + tableName);
             model.addAttribute("rows", rows);
             model.addAttribute("tableName", tableName);
             model.addAttribute("tableResults", "Results for Table: " + tableName);
-            // return rows;
         } catch (Exception e) {
             model.addAttribute("error", "Error querying table " + tableName + ": " + e.getMessage());
-            System.out.println(e.getMessage());
-            // return ResponseEntity.badRequest().body("Invalid user ID provided");
         }
         return "admin";
     }
@@ -72,8 +70,7 @@ public class AdminController {
     @PostMapping("/drop-table")
     public String dropTable(@RequestParam("tableName") String tableName, Model model) {
         try {
-            String sql = "DROP TABLE " + tableName;
-            jdbcTemplate.execute(sql);
+            adminService.dropTableIfExists(tableName);
             model.addAttribute("message", "Table '" + tableName + "' dropped successfully.");
         } catch (Exception e) {
             model.addAttribute("error", "Error dropping table: " + e.getMessage());

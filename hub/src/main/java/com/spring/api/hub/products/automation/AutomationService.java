@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 import org.springframework.stereotype.Service;
 
@@ -37,8 +38,7 @@ public class AutomationService {
     }
 
     public Mono<Map<String, Object>> getSystemMetrics() {
-        // Create a CompletableFuture to bridge reactive and blocking APIs
-        return Mono.fromFuture(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+        return Mono.fromCallable(() -> {
 
             Runtime runtime = Runtime.getRuntime();
 
@@ -82,7 +82,7 @@ public class AutomationService {
             metrics.put("usedMemory", formatBytes(usedMemory));
 
             return metrics;
-        }));
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
     /**
@@ -169,6 +169,33 @@ public class AutomationService {
         }
         automationEntity = automationRepository.save(automationEntity);
         return automationEntity;
+    }
+
+    // Reactive DB wrappers offloaded to boundedElastic scheduler to prevent blocking Netty event loop
+    public Mono<AutomationEntity> createAutomationEntityMono(AutomationEntity product) {
+        return Mono.fromCallable(() -> createAutomationEntity(product))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<AutomationEntity> updateAutomationEntityMono(AutomationEntity automationEntity, String updateKey,
+            String updateValue) {
+        return Mono.fromCallable(() -> updateAutomationEntity(automationEntity, updateKey, updateValue))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<java.util.Optional<AutomationEntity>> findByProductNameMono(String productName) {
+        return Mono.fromCallable(() -> automationRepository.findByProductName(productName))
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<java.util.List<AutomationEntity>> findAllAutomationEntitiesMono() {
+        return Mono.fromCallable(automationRepository::findAll)
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Mono<AutomationEntity> saveAutomationEntityMono(AutomationEntity entity) {
+        return Mono.fromCallable(() -> automationRepository.save(entity))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     public void prettyPrintEntity(AutomationEntity automationEntity) {

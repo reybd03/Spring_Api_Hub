@@ -18,9 +18,9 @@ public class GatewayConfig {
      */
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+        // Disabled loopback route to localhost:8082 on /products/** to prevent
+        // fighting internal controllers (ProductAutomationController, JenkinsController, etc.).
         return builder.routes()
-                .route("path_route", r -> r.path("/products/**")
-                        .uri("http://localhost:8082"))
                 .build();
     }
 }
