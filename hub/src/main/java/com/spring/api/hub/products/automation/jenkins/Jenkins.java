@@ -118,38 +118,30 @@ public class Jenkins {
 
     public String unpackJenkinsMap(Map<String, String> updateMap) {
         AutomationEntity jenkinsEntity = fetchJenkinsEntity();
-        String updateKey = updateMap.keySet().stream().findFirst().orElse("Invalid_Key");
-        String updateValue = updateMap.getOrDefault(updateKey, "Invalid_Value");
-
-        jenkinsEntity.setProductDiscoveryStatus("Pending_Discovery");
-        jenkinsEntity = automationRepository.save(jenkinsEntity);
-
-        switch (updateKey) {
-            case "productBasePath":
-                jenkinsEntity = discoverJenkins(jenkinsEntity, updateValue);
-                break;
-            // case "productURL":
-            // automationEntity.setProductURL(updateValue);
-            // break;
-            // case "productPort":
-            // automationEntity.setProductPort(updateValue);
-            // break;
-            // case "productUserName":
-            // automationEntity.setProductUserName(updateValue);
-            // break;
-            // case "productPassword":
-            // automationEntity.setProductPassword(updateValue);
-            // break;
-            // case "productAPIKey":
-            // automationEntity.setProductAPIKey(updateValue);
-            // break;
-            default:
-                System.out.println("Unknown update key: " + updateKey);
-                break;
+        if (jenkinsEntity == null) {
+            jenkinsEntity = getJenkinsDetails();
         }
 
-        return updateKey;
+        for (Map.Entry<String, String> entry : updateMap.entrySet()) {
+            String updateKey = entry.getKey();
+            String updateValue = entry.getValue();
 
+            switch (updateKey) {
+                case "productBasePath":
+                    jenkinsEntity.setProductDiscoveryStatus("Pending_Discovery");
+                    jenkinsEntity = automationRepository.save(jenkinsEntity);
+                    jenkinsEntity = discoverJenkins(jenkinsEntity, updateValue);
+                    break;
+                case "productURL", "productPort", "productUserName", "productPassword", "productAPIKey":
+                    jenkinsEntity = automationService.updateAutomationEntity(jenkinsEntity, updateKey, updateValue);
+                    break;
+                default:
+                    System.out.println("Unknown update key: " + updateKey);
+                    break;
+            }
+        }
+
+        return updateMap.keySet().stream().findFirst().orElse("Invalid_Key");
     }
 
     public AutomationEntity getJenkinsDetails() {

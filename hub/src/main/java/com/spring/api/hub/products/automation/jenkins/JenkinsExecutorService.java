@@ -1,9 +1,5 @@
 package com.spring.api.hub.products.automation.jenkins;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +10,6 @@ import com.spring.api.hub.products.automation.AutomationActions;
 import com.spring.api.hub.products.automation.AutomationEntity;
 import com.spring.api.hub.products.automation.AutomationRepository;
 import com.spring.api.hub.products.automation.AutomationService;
-import com.spring.api.hub.products.automation.jenkins.Jenkins;
 
 @Service
 public class JenkinsExecutorService {
@@ -34,68 +29,60 @@ public class JenkinsExecutorService {
     }
 
     /**
-     * Initiliaze Jenkins environment with Docker Compose
-     * ("docker", "compose", "up", "-d")
-     * 
-     * @param target
-     * @param action
+     * Manage Jenkins environment with Docker Compose
+     *
+     * @param target product target name
+     * @param action "start", "stop", or "restart"
      */
     public String actionGateway(String target, String action) {
         System.out.println("Target: " + target);
         System.out.println("Action: " + action);
 
         AutomationEntity jenkinsEntity = jenkins.fetchJenkinsEntity();
-        String jenkinsName = target;
+        if (jenkinsEntity == null) {
+            jenkinsEntity = jenkins.getJenkinsDetails();
+        }
         String jenkinsBasePath = jenkinsEntity.getProductBasePath();
-        Long jenkinsPid = jenkinsEntity.getProductProcessId();
-        String jenkinsStatus = jenkinsEntity.getProductStatus();
 
         List<String> command = new ArrayList<>();
 
-        if (!automationActions.isProcessRunning(jenkinsName)) {
-            jenkinsEntity.setProductStatus("Stopped");
-        }
-
-        switch (jenkinsStatus) {
-            case "Stopped", "Unknown", "Failed" -> {
+        switch (action.toLowerCase()) {
+            case "start" -> {
                 command.add("docker");
                 command.add("compose");
                 command.add("up");
                 command.add("-d");
-                jenkinsPid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
-                jenkinsEntity.setProductStatus("Running");
-                jenkinsEntity.setProductProcessId(jenkinsPid);
+                Long pid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
+                boolean running = automationActions.isComposeRunning(jenkinsBasePath) || automationActions.isPidRunning(pid);
+                jenkinsEntity.setProductStatus(running ? "Running" : "Failed");
+                jenkinsEntity.setProductProcessId(running ? pid : null);
             }
-            case "Running", "Starting", "Stopping", "Restarting" -> {
-                switch (action) {
-                    case "stop" -> {
-                        command.add("docker");
-                        command.add("compose");
-                        command.add("stop");
-                        jenkinsPid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
-                        jenkinsEntity.setProductStatus("Stopped");
-                        jenkinsEntity.setProductProcessId(jenkinsPid);
-                    }
-                    case "restart" -> {
-                        command.add("docker");
-                        command.add("compose");
-                        command.add("restart");
-                        jenkinsPid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
-                        jenkinsEntity.setProductStatus("Running"); // TODO: Check Status from PID via Logging
-                        jenkinsEntity.setProductProcessId(jenkinsPid);
-                    }
-                    default -> {
-                        System.out.println("Invalid action");
-                    }
-                }
+            case "stop" -> {
+                command.add("docker");
+                command.add("compose");
+                command.add("stop");
+                Long pid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
+                boolean running = automationActions.isComposeRunning(jenkinsBasePath) || automationActions.isPidRunning(jenkinsEntity.getProductProcessId());
+                jenkinsEntity.setProductStatus(running ? "Failed" : "Stopped");
+                jenkinsEntity.setProductProcessId(running ? jenkinsEntity.getProductProcessId() : null);
+            }
+            case "restart" -> {
+                command.add("docker");
+                command.add("compose");
+                command.add("restart");
+                Long pid = automationActions.executeProductProcess(command, jenkinsBasePath, action);
+                boolean running = automationActions.isComposeRunning(jenkinsBasePath) || automationActions.isPidRunning(pid);
+                jenkinsEntity.setProductStatus(running ? "Running" : "Failed");
+                jenkinsEntity.setProductProcessId(running ? pid : null);
             }
             default -> {
-                System.out.println("Invalid jenkins status");
+                System.out.println("Invalid action: " + action);
+                return "Invalid Action";
             }
         }
+
         automationService.prettyPrintEntity(jenkinsEntity);
-        jenkinsEntity = automationRepository.save(jenkinsEntity);
+        automationRepository.save(jenkinsEntity);
         return "Success";
     }
-
 }

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<body>
+    <div th:fragment="jenkinsContent">
+        <div id="content">
+            <section>
+                <ul id="product-fields">
+                    <li>Product Name: <span id="productName"></span></li>
+                    <li>Product Discovered: <span id="productDiscovered"></span></li>
+                    <li>Product Discovery Status: <span id="productDiscoveryStatus"></span></li>
+                    <li>Product Base Path: <span id="productBasePath"></span> <button
+                            id="updateProductBasePath">Update</button></li>
+                    <li>Product User Name: <span id="productUserName"></span> <button
+                            id="updateProductUserName">Update</button></li>
+                    <li>Product Password: <span id="productPassword"></span> <button
+                            id="updateProductPassword">Update</button></li>
+                    <li>Product API Key: <span id="productAPIKey"></span> <button
+                            id="updateProductAPIKey">Update</button></li>
+                    <li>Product URL: <span id="productURL"></span> <button
+                            id="updateProductURL">Update</button></li>
+                    <li>Product Port: <span id="productPort"></span> <button
+                            id="updateProductPort">Update</button></li>
+                </ul>
+            </section>
+        </div>
+
+        <section id="performance-stats">
+            <!-- Real Time Performance Cards -->
+            <div class="card">
+                <h2>Live System Telemetry</h2>
+                <p>Service Uptime: <span id="uptime-display" class="metric-val">0.00</span></p>
+                <p>Host Total CPU Usage: <span id="systemCpuLoad-display" class="metric-val">0.00</span></p>
+                <p>Host Process CPU Usage: <span id="processCpuLoad-display" class="metric-val">0.00</span></p>
+                <p>Host Total Memory: <span id="totalMemory-display" class="metric-val">0.00</span></p>
+                <p>Host Free Memory: <span id="freeMemory-display" class="metric-val">0.00</span></p>
+                <p>Host Used Memory: <span id="usedMemory-display" class="metric-val">0.00</span></p>
+            </div>
+
+            <!-- Devops Controls -->
+            <div class="card">
+                <h2>Docker Orchestration</h2>
+                <button class="btn btn-start" onclick="sendControl('docker', 'start')">Start Container</button>
+                <button class="btn btn-stop" onclick="sendControl('docker', 'stop')">Stop Container</button>
+            </div>
+
+            <div class="card">
+                <h2>Jenkins Master Process</h2>
+                <button class="btn btn-start" onclick="sendControl('jenkins', 'start')">Start Jenkins</button>
+                <button class="btn btn-stop" onclick="sendControl('jenkins', 'stop')">Shutdown Jenkins</button>
+                <button class="btn btn-stop" onclick="sendControl('jenkins', 'restart')">Restart Jenkins</button>
+            </div>
+        </section>
+        <div id="log-output" style="color: #aaa; font-style: italic;"></div>
+
+        <!-- Jenkins-specific scripts -->
+        <script th:src="@{/js/products.js}" type="text/javascript"></script>
+        <script th:src="@{/js/updateFields.js}" type="text/javascript"></script>
+        <script th:src="@{/js/devOpsProducts.js}" type="text/javascript"></script>
+    </div>
+</body>
+</html>
