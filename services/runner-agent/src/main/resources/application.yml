@@ -1,0 +1,12 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: runner-agent
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

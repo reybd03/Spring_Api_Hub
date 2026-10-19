@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'api-platform'
+
+include 'hub'
+include 'services:api-gateway'
+include 'services:automation-service'
+include 'services:web-portal'
+include 'services:runner-agent'
+include 'shared:common-dto'
+include 'shared:common-security'
