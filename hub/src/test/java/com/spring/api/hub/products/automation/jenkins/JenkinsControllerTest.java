@@ -1,6 +1,7 @@
 package com.spring.api.hub.products.automation.jenkins;
 
 import com.spring.api.hub.WebController;
+import com.spring.api.hub.lifecycle.DrainSignal;
 import com.spring.api.hub.products.automation.AutomationEntity;
 import com.spring.api.hub.products.automation.AutomationRepository;
 import com.spring.api.hub.products.automation.AutomationService;
@@ -38,7 +39,8 @@ class JenkinsControllerTest {
                 jenkins,
                 automationRepository,
                 automationService,
-                jenkinsExecutorService
+                jenkinsExecutorService,
+                new DrainSignal()
         );
     }
 

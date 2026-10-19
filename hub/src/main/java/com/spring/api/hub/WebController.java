@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
+import com.spring.api.hub.web.NavigationService;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -68,8 +70,8 @@ public class WebController {
     }
 
     public Stream<String> RequestMappingInfoToStream() {
-        RequestMappingHandlerMapping handlerMapping = (RequestMappingHandlerMapping) applicationContext
-                .getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
+        RequestMappingHandlerMapping handlerMapping = applicationContext.getBean(NavigationService.HANDLER_MAPPING_BEAN,
+                RequestMappingHandlerMapping.class);
 
         return handlerMapping.getHandlerMethods().keySet().stream()
                 .map(requestMappingInfo -> requestMappingInfo.getPatternsCondition().getDirectPaths().stream()

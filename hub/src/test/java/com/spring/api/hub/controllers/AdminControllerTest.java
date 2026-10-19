@@ -1,11 +1,15 @@
 package com.spring.api.hub.controllers;
 
 import com.spring.api.hub.admin.AdminService;
+import com.spring.api.hub.lifecycle.GracefulShutdownCoordinator;
+import com.spring.api.hub.lifecycle.ShutdownProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
+
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -14,13 +18,17 @@ class AdminControllerTest {
 
     private AdminService adminService;
     private JdbcTemplate jdbcTemplate;
+    private GracefulShutdownCoordinator shutdownCoordinator;
+    private ShutdownProperties shutdownProperties;
     private AdminController adminController;
 
     @BeforeEach
     void setUp() {
         adminService = new AdminService();
         jdbcTemplate = mock(JdbcTemplate.class);
-        adminController = new AdminController(adminService, jdbcTemplate);
+        shutdownCoordinator = mock(GracefulShutdownCoordinator.class);
+        shutdownProperties = new ShutdownProperties(Duration.ofSeconds(20), "test-token");
+        adminController = new AdminController(adminService, jdbcTemplate, shutdownCoordinator, shutdownProperties, "8082", "8082");
     }
 
     @Test

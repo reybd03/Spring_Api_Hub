@@ -4,6 +4,25 @@
     --text-color: #1a1a1a;
     --button-bg: #eeeeee;
     --button-text: #1a1a1a;
+    --border-color: #dddddd;
+    --card-bg: #fafafa;
+    --card-border: #e0e0e0;
+    --danger-bg: #d32f2f;
+    --danger-text: #ffffff;
+    --danger-hover: #b71c1c;
+    --secondary-bg: #757575;
+    --secondary-text: #ffffff;
+    --secondary-hover: #616161;
+    --success-bg: #388e3c;
+    --success-text: #ffffff;
+    --warning-bg: #f57c00;
+    --warning-text: #ffffff;
+    --info-bg: #1976d2;
+    --info-text: #ffffff;
+    --modal-overlay: rgba(0, 0, 0, 0.5);
+    --modal-bg: #ffffff;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* 2. Dark Theme Variables */
@@ -12,6 +31,25 @@
     --text-color: #f5f5f5;
     --button-bg: #333333;
     --button-text: #f5f5f5;
+    --border-color: #444444;
+    --card-bg: #1e1e1e;
+    --card-border: #333333;
+    --danger-bg: #ef5350;
+    --danger-text: #ffffff;
+    --danger-hover: #e53935;
+    --secondary-bg: #616161;
+    --secondary-text: #ffffff;
+    --secondary-hover: #424242;
+    --success-bg: #66bb6a;
+    --success-text: #1a1a1a;
+    --warning-bg: #ffb74d;
+    --warning-text: #1a1a1a;
+    --info-bg: #42a5f5;
+    --info-text: #ffffff;
+    --modal-overlay: rgba(0, 0, 0, 0.7);
+    --modal-bg: #1e1e1e;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* 3. Base page styling using variables */
@@ -30,14 +68,13 @@ body {
     align-items: center;
     margin-bottom: 50px;
     width: 60%;
-
 }
 
 #content {
     flex: 1;
     flex-basis: 50%;
-    
 }
+
 /* 4. Simple toggle button styling */
 #theme-toggle {
     position: absolute;
@@ -60,10 +97,11 @@ h1 {
 h2 {
     margin-left: 60px;
 }
+
 #nav-list {
     list-style-type: none;
-    
 }
+
 #product-fields {
     list-style-type: none;
     margin-left: 30px;
@@ -75,6 +113,7 @@ h2 {
     padding: 20px;
     /* border-radius: 8px; */
 }
+
 div.card {
     margin-left: auto;
     padding: 0.5rem 1rem;
@@ -106,4 +145,482 @@ a:hover {
 /* 5. Active link (Moment of click) */
 a:active {
     color: #d32f2f;
+}
+
+/* =========================
+   Admin Section Styling
+   ========================= */
+.admin-section {
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.admin-section h2 {
+    margin-left: 0;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.section-description {
+    margin-left: 0;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 0.95rem;
+}
+
+/* =========================
+   Button Styles
+   ========================= */
+.btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-danger {
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: var(--danger-hover);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    color: var(--secondary-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--secondary-hover);
+}
+
+.btn-success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+}
+
+/* =========================
+   Shutdown Banner (Global)
+   ========================= */
+.shutdown-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background: linear-gradient(135deg, var(--danger-bg) 0%, #c62828 100%);
+    color: var(--danger-text);
+    box-shadow: var(--shadow-lg);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.shutdown-banner.hidden {
+    display: none;
+}
+
+.shutdown-banner-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.shutdown-banner-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.shutdown-banner-text {
+    flex: 1;
+    min-width: 280px;
+}
+
+.shutdown-banner-text h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.shutdown-banner-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+.shutdown-banner-detail {
+    font-size: 0.8rem !important;
+    opacity: 0.85 !important;
+}
+
+.shutdown-banner-status {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.shutdown-progress {
+    width: 100%;
+    max-width: 200px;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.shutdown-progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: var(--danger-text);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.shutdown-status-text {
+    font-size: 0.75rem;
+    text-align: right;
+    opacity: 0.9;
+}
+
+/* =========================
+   Modal Dialog
+   ========================= */
+.modal {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 560px;
+    width: 90%;
+    padding: 0;
+    background-color: var(--modal-bg);
+    color: var(--text-color);
+}
+
+.modal::backdrop {
+    background-color: var(--modal-overlay);
+    backdrop-filter: blur(2px);
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-color);
+    opacity: 0.6;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.modal-close:hover {
+    opacity: 1;
+    background-color: var(--button-bg);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-warning {
+    margin: 0 0 1.5rem;
+    padding: 1rem;
+    background-color: rgba(211, 47, 47, 0.1);
+    border: 1px solid var(--danger-bg);
+    border-radius: 6px;
+    color: var(--danger-text);
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .modal-warning {
+    background-color: rgba(239, 83, 80, 0.15);
+}
+
+.modal-details h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.modal-details ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.8;
+}
+
+.modal-details li {
+    opacity: 0.9;
+}
+
+.modal-confirmation {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--danger-bg);
+    flex-shrink: 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--card-border);
+    background-color: var(--card-bg);
+}
+
+/* =========================
+   Shutdown Status Panel
+   ========================= */
+.shutdown-status-panel {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.shutdown-status-panel.hidden {
+    display: none;
+}
+
+.shutdown-status-panel h3 {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+}
+
+.status-value {
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: monospace;
+}
+
+.shutdown-status-panel .shutdown-progress {
+    height: 8px;
+    margin-bottom: 1rem;
+}
+
+.status-log {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0.75rem;
+    background-color: var(--bg-color);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+.status-log-entry {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.status-log-entry:last-child {
+    border-bottom: none;
+}
+
+.status-log-time {
+    opacity: 0.6;
+    white-space: nowrap;
+}
+
+.status-log-info { color: var(--info-text); }
+.status-log-success { color: var(--success-bg); }
+.status-log-error { color: var(--danger-bg); }
+.status-log-warning { color: var(--warning-bg); }
+
+/* =========================
+   Toast Notifications
+   ========================= */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 10001;
+    max-width: 400px;
+}
+
+.toast-show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-error { background-color: var(--danger-bg); }
+.toast-success { background-color: var(--success-bg); }
+.toast-warning { background-color: var(--warning-bg); color: var(--warning-text); }
+.toast-info { background-color: var(--info-bg); }
+
+/* =========================
+   Screen Reader Only
+   ========================= */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* =========================
+   Responsive Adjustments
+   ========================= */
+@media (max-width: 768px) {
+    .shutdown-banner-content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .shutdown-banner-status {
+        align-items: stretch;
+    }
+
+    .shutdown-progress {
+        max-width: none;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
 }

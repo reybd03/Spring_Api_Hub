@@ -1,5 +1,6 @@
 package com.spring.api.hub.products.automation;
 
+import com.spring.api.hub.lifecycle.MessageBufferRegistry;
 import com.spring.api.hub.products.automation.AutomationEntity;
 import com.spring.api.hub.products.automation.AutomationRepository;
 
@@ -33,8 +34,11 @@ public class AutomationService {
     // Replay the last element to new subscribers, backpressure handling included
     private final Sinks.Many<String> hotSink = Sinks.many().multicast().onBackpressureBuffer();
 
-    AutomationService(AutomationRepository automationRepository) {
+    AutomationService(AutomationRepository automationRepository, MessageBufferRegistry messageBuffers) {
         this.automationRepository = automationRepository;
+        // Hand the buffer to the shutdown sequence so it is completed on drain instead of
+        // being discarded while subscribers are still attached.
+        messageBuffers.register(hotSink);
     }
 
     public Mono<Map<String, Object>> getSystemMetrics() {

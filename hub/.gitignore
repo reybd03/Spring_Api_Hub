@@ -42,3 +42,8 @@ out/
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# Local start-up artifacts
+.env
+logs/
+hub.pid

@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.Map;
 
 import com.spring.api.hub.WebController;
+import com.spring.api.hub.lifecycle.DrainSignal;
 import com.spring.api.hub.products.automation.AutomationEntity;
 import com.spring.api.hub.products.automation.AutomationRepository;
 import com.spring.api.hub.products.automation.AutomationService;
@@ -39,15 +40,17 @@ public class JenkinsController {
     private final JenkinsExecutorService jenkinsExecutorService;
     private final AutomationRepository automationRepository;
     private final AutomationService automationService;
+    private final DrainSignal drainSignal;
     // private final AutomationEntity jenkinsEntity;
 
     JenkinsController(WebController webController, Jenkins jenkins, AutomationRepository automationRepository,
-            AutomationService automationService, JenkinsExecutorService jenkinsExecutorService) {
+            AutomationService automationService, JenkinsExecutorService jenkinsExecutorService, DrainSignal drainSignal) {
         this.webController = webController;
         this.jenkins = jenkins;
         this.automationRepository = automationRepository;
         this.automationService = automationService;
         this.jenkinsExecutorService = jenkinsExecutorService;
+        this.drainSignal = drainSignal;
     }
 
     private Mono<Map<String, Object>> getJenkinsConfigMono() {
@@ -118,7 +121,12 @@ public class JenkinsController {
                         .id(String.valueOf(System.currentTimeMillis()))
                         .event("sys-stats")
                         .data(data)
-                        .build());
+                        .build())
+                // These streams never end on their own, so they would hold the instance open
+                // until the shutdown timeout. Ending them on drain releases the connection
+                // promptly; the browser EventSource reconnects and is then refused by the
+                // drain gate until the instance is back.
+                .takeUntilOther(drainSignal.drain());
     }
 
     // Stream Jenkin configuration details
@@ -131,7 +139,8 @@ public class JenkinsController {
                         .id(String.valueOf(System.currentTimeMillis()))
                         .event("config")
                         .data(data)
-                        .build());
+                        .build())
+                .takeUntilOther(drainSignal.drain());
     }
 
     // TODO: Stream Jenkins nodes and jobs

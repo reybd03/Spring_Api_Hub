@@ -1,5 +1,6 @@
 package com.spring.api.hub.products.automation;
 
+import com.spring.api.hub.lifecycle.MessageBufferRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -21,7 +22,7 @@ class AutomationServiceReactiveTest {
     @BeforeEach
     void setUp() {
         automationRepository = mock(AutomationRepository.class);
-        automationService = new AutomationService(automationRepository);
+        automationService = new AutomationService(automationRepository, new MessageBufferRegistry());
     }
 
     @Test

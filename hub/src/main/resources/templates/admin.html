@@ -22,6 +22,23 @@
         Toggle Theme
     </button>
 
+    <!-- Platform Shutdown Banner - shown to all users when shutdown is in progress -->
+    <div id="shutdown-banner" class="shutdown-banner hidden" role="alert" aria-live="polite">
+        <div class="shutdown-banner-content">
+            <div class="shutdown-banner-icon" aria-hidden="true">⚠</div>
+            <div class="shutdown-banner-text">
+                <h2>Platform Maintenance in Progress</h2>
+                <p>The platform is preparing for shutdown. <span id="shutdown-countdown">Calculating...</span></p>
+                <p class="shutdown-banner-detail">New transactions have been disabled. Active requests are being completed.</p>
+            </div>
+            <div class="shutdown-banner-status">
+                <div class="shutdown-progress">
+                    <div class="shutdown-progress-bar" id="shutdown-progress-bar"></div>
+                </div>
+                <div id="shutdown-status-text" class="shutdown-status-text">Draining in-flight requests...</div>
+            </div>
+        </div>
+    </div>
 
     <section id="sqlActions">
 
@@ -47,6 +64,84 @@
             <button type="submit" id="drop-table">Drop Table</button>
         </form>
     </section>
+
+    <!-- Platform Shutdown Control Section (Admin Only) -->
+    <section id="shutdownControl" class="admin-section">
+        <h2>Platform Shutdown Control</h2>
+        <p class="section-description">Initiate a graceful platform shutdown with traffic draining. This action requires double confirmation.</p>
+        
+        <button id="shutdown-trigger-btn" type="button" class="btn btn-danger" aria-haspopup="dialog" aria-label="Open platform shutdown confirmation dialog">
+            Initiate Platform Shutdown
+        </button>
+
+        <!-- Double-Confirmation Modal Dialog -->
+        <dialog id="shutdown-confirm-modal" class="modal" role="alertdialog" aria-labelledby="modal-title" aria-describedby="modal-description">
+            <div class="modal-backdrop" tabindex="-1"></div>
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2 id="modal-title">Confirm Platform Shutdown</h2>
+                    <button type="button" class="modal-close" id="modal-close-btn" aria-label="Close confirmation dialog">&times;</button>
+                </header>
+                <div class="modal-body">
+                    <p id="modal-description" class="modal-warning">
+                        <strong>Warning:</strong> This will initiate a graceful shutdown of the entire platform. All services will stop accepting new requests and will drain in-flight traffic before terminating.
+                    </p>
+                    <div class="modal-details">
+                        <h3>What will happen:</h3>
+                        <ul>
+                            <li>All services will immediately stop accepting new requests (readiness → OUT_OF_SERVICE)</li>
+                            <li>In-flight requests will be allowed to complete (up to <span id="drain-timeout">20s</span>)</li>
+                            <li>Streaming connections will be closed</li>
+                            <li>Services will deregister from service discovery</li>
+                            <li>Process will terminate after drain completes</li>
+                        </ul>
+                    </div>
+                    <div class="modal-confirmation">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="confirm-understand" required>
+                            <span>I understand this will shut down the entire platform</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="confirm-authorized" required>
+                            <span>I am authorized to perform this action</span>
+                        </label>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="modal-confirm-btn" disabled>Shutdown Platform</button>
+                </footer>
+            </div>
+        </dialog>
+
+        <!-- Shutdown Status Display (shown after initiation) -->
+        <div id="shutdown-status-panel" class="shutdown-status-panel hidden">
+            <h3>Shutdown Progress</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Phase</span>
+                    <span class="status-value" id="status-phase">Initializing...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">In-Flight Requests</span>
+                    <span class="status-value" id="status-inflight">—</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Drain Progress</span>
+                    <span class="status-value" id="status-progress">0%</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Time Elapsed</span>
+                    <span class="status-value" id="status-elapsed">0s</span>
+                </div>
+            </div>
+            <div class="shutdown-progress">
+                <div class="shutdown-progress-bar" id="status-progress-bar"></div>
+            </div>
+            <div id="status-log" class="status-log"></div>
+        </div>
+    </section>
+
     <section id="sqlResults">
         <div id="results-table">
             <h2 th:text=${tableResults}>Table Results</h2>
@@ -65,6 +160,7 @@
     <!-- Links to src/main/resources/static/js/*.js -->
     <script th:src="@{/js/main.js}" type="text/javascript"></script>
     <script th:src="@{/js/database.js}" type="text/javascript"></script>
+    <script th:src="@{/js/shutdown.js}" type="text/javascript"></script>
 </body>
 
 </html>

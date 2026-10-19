@@ -29,6 +29,7 @@ Goals:
 - Add a rate limiting system
 - Use Redis to rate limit the api
 - Add a distributed tracing system
+- Add a startup script for command line (Linux and Windows)
 
 API Structure:
 
