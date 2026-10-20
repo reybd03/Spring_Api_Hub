@@ -73,4 +73,4 @@
 
 export.auto: true
 sync:
-    remote: "https://github.com/reybd03/Spring_Api_Hub"
+    remote: "git@github.com:reybd03/Spring_Api_Hub.git"
