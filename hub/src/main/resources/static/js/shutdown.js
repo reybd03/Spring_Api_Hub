@@ -74,9 +74,13 @@
             elements.modalCancel.addEventListener('click', closeModal);
         }
 
-        // Modal backdrop click to close
+        // Close when the native backdrop (outside the dialog box) is clicked
         if (elements.modal) {
-            elements.modal.querySelector('.modal-backdrop')?.addEventListener('click', closeModal);
+            elements.modal.addEventListener('click', e => {
+                if (e.target === elements.modal) {
+                    closeModal();
+                }
+            });
         }
 
         // Checkbox validation
@@ -175,13 +179,13 @@
                 }
             });
 
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Shutdown request failed' }));
-                throw new Error(error.message || `HTTP ${response.status}`);
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.message || `HTTP ${response.status}`);
             }
 
-            const data = await response.json();
-            logStatus('Shutdown initiated successfully', 'success');
+            logStatus(data.message || 'Shutdown initiated successfully', 'success');
 
             // Start polling for status
             startStatusPolling();
@@ -238,8 +242,10 @@
             const response = await fetch(CONFIG.statusEndpoint);
             if (!response.ok) {
                 if (response.status === 404) {
-                    // Status endpoint not available, might be fully shut down
-                    handleShutdownComplete();
+                    // The status endpoint is missing or not exposed. Never assume the
+                    // platform is offline in that case: stop polling and say so.
+                    stopStatusPolling();
+                    setStatusUnavailable('Shutdown status endpoint not available (/actuator/shutdown-status)');
                     return;
                 }
                 throw new Error(`HTTP ${response.status}`);
@@ -248,18 +254,35 @@
             const data = await response.json();
             updateStatusDisplay(data);
 
-            // Check if drain is complete
-            if (data.draining === false && data.complete === true) {
+            // Completion is signalled by the server, not inferred from a missing response.
+            if (data.complete === true) {
                 handleShutdownComplete();
             }
 
         } catch (error) {
             logStatus(`Status poll error: ${error.message}`, 'error');
-            // If we can't reach status endpoint, shutdown might be complete
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                handleShutdownComplete();
+                // A dropped connection here usually means the process finished shutting down,
+                // but do not keep hammering an endpoint that is gone.
+                stopStatusPolling();
+                setStatusUnavailable('Lost contact with the platform during shutdown');
             }
         }
+    }
+
+    function setStatusUnavailable(message) {
+        logStatus(message, 'error');
+        if (elements.statusPhase) {
+            elements.statusPhase.textContent = 'Status Unavailable';
+        }
+        if (elements.statusText) {
+            elements.statusText.textContent = 'Shutdown status unavailable';
+        }
+        if (elements.triggerBtn) {
+            elements.triggerBtn.disabled = false;
+            elements.triggerBtn.textContent = 'Initiate Platform Shutdown';
+        }
+        showNotification(message, 'error');
     }
 
     function updateStatusDisplay(data) {
@@ -296,17 +319,19 @@
     }
 
     function getPhaseLabel(data) {
-        if (!data.draining) return 'Not Started';
-        if (data.readinessChanged) return 'Readiness: OUT_OF_SERVICE';
-        if (data.deregistering) return 'Deregistering from Service Discovery';
-        if (data.draining) return 'Draining In-Flight Requests';
         if (data.complete) return 'Shutdown Complete';
-        return 'Shutting Down...';
+        if (!data.draining) return 'Not Started';
+        return 'Draining In-Flight Requests';
     }
 
     function calculateProgress(data) {
-        if (!data.draining) return 0;
+        // Prefer the server's progress estimate when it provides one.
+        if (typeof data.progressPercent === 'number') {
+            return Math.round(data.progressPercent);
+        }
+
         if (data.complete) return 100;
+        if (!data.draining) return 0;
 
         // Estimate progress based on in-flight requests and time
         const elapsed = state.drainStartTime ? (Date.now() - state.drainStartTime) : 0;
@@ -428,6 +453,16 @@
                 throw new Error('Status not available');
             })
             .then(data => {
+                if (data.drainTimeoutMs) {
+                    CONFIG.drainTimeout = data.drainTimeoutMs;
+                    if (elements.drainTimeoutEl) {
+                        elements.drainTimeoutEl.textContent = `${(data.drainTimeoutMs / 1000).toFixed(0)}s`;
+                    }
+                }
+                if (data.complete) {
+                    handleShutdownComplete();
+                    return;
+                }
                 if (data.draining) {
                     state.isDraining = true;
                     state.drainStartTime = Date.now(); // Approximate

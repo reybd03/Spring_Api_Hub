@@ -1,6 +1,5 @@
 package com.spring.api.hub.lifecycle;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
@@ -18,30 +17,29 @@ public class ShutdownStatusEndpoint {
 
     private final GracefulShutdownCoordinator coordinator;
     private final InFlightRequestTracker requestTracker;
-    private final DrainSignal drainSignal;
     private final ShutdownProperties properties;
 
     public ShutdownStatusEndpoint(GracefulShutdownCoordinator coordinator,
                                   InFlightRequestTracker requestTracker,
-                                  DrainSignal drainSignal,
                                   ShutdownProperties properties) {
         this.coordinator = coordinator;
         this.requestTracker = requestTracker;
-        this.drainSignal = drainSignal;
         this.properties = properties;
     }
 
     @ReadOperation
     public Map<String, Object> status() {
-        boolean draining = drainSignal.isDraining() || requestTracker.isDraining();
+        boolean draining = coordinator.isDraining() || requestTracker.isDraining();
+        boolean complete = coordinator.isComplete();
         int inFlight = requestTracker.getInFlightCount();
         long drainTimeoutMs = properties.drainTimeout().toMillis();
 
         // Calculate progress estimate
-        int progress = calculateProgress(draining, inFlight, drainTimeoutMs);
+        int progress = calculateProgress(draining, complete, inFlight);
 
         return Map.of(
                 "draining", draining,
+                "complete", complete,
                 "inFlightRequests", inFlight,
                 "drainTimeoutMs", drainTimeoutMs,
                 "progressPercent", progress,
@@ -50,9 +48,10 @@ public class ShutdownStatusEndpoint {
         );
     }
 
-    private int calculateProgress(boolean draining, int inFlight, long drainTimeoutMs) {
+    private int calculateProgress(boolean draining, boolean complete, int inFlight) {
+        if (complete) return 100;
         if (!draining) return 0;
-        if (inFlight == 0) return 100;
+        if (inFlight == 0) return 95;
 
         // We don't track start time here, so estimate based on in-flight count
         // A more accurate implementation would track drain start time

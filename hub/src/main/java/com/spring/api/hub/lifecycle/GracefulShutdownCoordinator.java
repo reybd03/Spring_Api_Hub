@@ -40,6 +40,7 @@ public class GracefulShutdownCoordinator {
     private final List<ServiceDeregistration> deregistrations;
     private final ShutdownProperties properties;
     private final AtomicBoolean drained = new AtomicBoolean();
+    private final AtomicBoolean completed = new AtomicBoolean();
 
     public GracefulShutdownCoordinator(ApplicationContext applicationContext, InFlightRequestTracker requestTracker,
             DrainSignal drainSignal, MessageBufferRegistry messageBuffers,
@@ -74,23 +75,41 @@ public class GracefulShutdownCoordinator {
         }
         log.info("Graceful shutdown started ({})", reason);
 
-        // 1. Tell everything upstream to stop routing here. Readiness drives /actuator/health/readiness
-        //    to OUT_OF_SERVICE, which is what gateways and orchestrators actually watch.
-        AvailabilityChangeEvent.publish(applicationContext, ReadinessState.REFUSING_TRAFFIC);
+        try {
+            // 1. Tell everything upstream to stop routing here. Readiness drives /actuator/health/readiness
+            //    to OUT_OF_SERVICE, which is what gateways and orchestrators actually watch.
+            AvailabilityChangeEvent.publish(applicationContext, ReadinessState.REFUSING_TRAFFIC);
 
-        // 2. Stop accepting new business requests on this instance immediately rather than
-        //    waiting for the upstream to notice.
-        requestTracker.beginDrain();
+            // 2. Stop accepting new business requests on this instance immediately rather than
+            //    waiting for the upstream to notice.
+            requestTracker.beginDrain();
 
-        // 3. Leave the discovery registry, if one is configured.
-        deregister(reason);
+            // 3. Leave the discovery registry, if one is configured.
+            deregister(reason);
 
-        // 4. End the never-ending streams so they stop counting as in-flight work.
-        drainSignal.signal();
-        messageBuffers.complete();
+            // 4. End the never-ending streams so they stop counting as in-flight work.
+            drainSignal.signal();
+            messageBuffers.complete();
 
-        // 5. Wait for the work that is genuinely still running.
-        awaitDrainedWork();
+            // 5. Wait for the work that is genuinely still running.
+            awaitDrainedWork();
+        } finally {
+            completed.set(true);
+        }
+    }
+
+    /**
+     * @return {@code true} once a drain has been started and has not yet finished
+     */
+    public boolean isDraining() {
+        return drained.get() && !completed.get();
+    }
+
+    /**
+     * @return {@code true} once the drain sequence has run to completion
+     */
+    public boolean isComplete() {
+        return completed.get();
     }
 
     private void deregister(String reason) {

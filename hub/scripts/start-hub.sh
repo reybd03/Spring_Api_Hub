@@ -22,6 +22,9 @@ DETACH=false
 RUN_JAR=false
 BUILD=true
 DRY_RUN=false
+DEBUG_JVM="${DEBUG_JVM:-false}"
+DEBUG_PORT="${DEBUG_PORT:-5005}"
+DEBUG_SUSPEND="${DEBUG_SUSPEND:-n}"
 DB_SERVICE="${HUB_DB_SERVICE:-mysql}"
 DB_WAIT_TIMEOUT="${HUB_DB_WAIT_TIMEOUT:-120}"
 APP_PORT="${SERVER_PORT:-8082}"
@@ -45,6 +48,9 @@ Options:
       --jar              Build (unless --no-build) and run the packaged jar instead of bootRun
       --no-build         With --jar, reuse an existing jar in build/libs instead of building
   -d, --detach           Run in the background (implies --jar); logs go to ${LOG_DIR}
+      --debug-jvm        Start the JVM with JDWP debugging enabled
+      --debug-port <port> Debug port to listen on (default: ${DEBUG_PORT}; bootRun uses 5005)
+      --debug-suspend    Suspend startup until a debugger attaches (jar mode only)
       --dry-run          Print the resolved configuration and exit without starting anything
   -h, --help             Show this help and exit
 
@@ -54,6 +60,9 @@ Environment:
   SPRING_DATASOURCE_USERNAME DB user (default: rey, must match the MySQL service)
   SPRING_DATASOURCE_PASSWORD Overrides MYSQL_PASSWORD for the application
   HUB_SHUTDOWN_TOKEN         Enables POST /actuator/shutdown when set (blank disables it)
+  DEBUG_JVM                  Enable JVM debugging when set to true
+  DEBUG_PORT                 Debug listen port for jar mode (default: 5005)
+  DEBUG_SUSPEND              Suspend on startup when set to y (jar mode only)
   SERVER_PORT                HTTP port (default: 8082)
 
 Credentials can also live in ${HUB_DIR}/.env, which this script loads automatically.
@@ -69,13 +78,16 @@ EOF
 # --- Argument parsing ------------------------------------------------------------------
 while (( $# )); do
   case "$1" in
-    -p|--profile)  PROFILE="${2:?--profile requires a value}"; shift 2 ;;
-    --no-db)       START_DB=false; shift ;;
-    --jar)         RUN_JAR=true; shift ;;
-    --no-build)    BUILD=false; shift ;;
-    -d|--detach)   DETACH=true; RUN_JAR=true; shift ;;
-    --dry-run)     DRY_RUN=true; shift ;;
-    -h|--help)     usage; exit 0 ;;
+    -p|--profile)      PROFILE="${2:?--profile requires a value}"; shift 2 ;;
+    --no-db)           START_DB=false; shift ;;
+    --jar)             RUN_JAR=true; shift ;;
+    --no-build)        BUILD=false; shift ;;
+    -d|--detach)       DETACH=true; RUN_JAR=true; shift ;;
+    --debug-jvm)       DEBUG_JVM=true; shift ;;
+    --debug-port)      DEBUG_PORT="${2:?--debug-port requires a value}"; shift 2 ;;
+    --debug-suspend)   DEBUG_SUSPEND=y; shift ;;
+    --dry-run)         DRY_RUN=true; shift ;;
+    -h|--help)         usage; exit 0 ;;
     *)             die "Unknown option: $1 (try --help)" ;;
   esac
 done
@@ -154,9 +166,18 @@ build_jar() {
 
 run_bootrun() {
   check_port_free
-  log "Starting hub via Gradle bootRun (profile: ${PROFILE}, port: ${APP_PORT}) ..."
+  if [[ "${DEBUG_JVM}" == "true" ]]; then
+    log "Starting hub via Gradle bootRun (profile: ${PROFILE}, port: ${APP_PORT}, debug: 5005, suspended) ..."
+  else
+    log "Starting hub via Gradle bootRun (profile: ${PROFILE}, port: ${APP_PORT}) ..."
+  fi
   cd "$HUB_DIR"
-  exec "$GRADLEW" bootRun --args="--spring.profiles.active=${PROFILE}"
+  if [[ "${DEBUG_JVM}" == "true" ]]; then
+    # --debug-jvm is a Gradle JavaExec option, not an application arg.
+    exec "$GRADLEW" bootRun --debug-jvm --args="--spring.profiles.active=${PROFILE}"
+  else
+    exec "$GRADLEW" bootRun --args="--spring.profiles.active=${PROFILE}"
+  fi
 }
 
 run_jar_foreground() {
@@ -164,9 +185,15 @@ run_jar_foreground() {
   $BUILD && build_jar
   local jar; jar="$(find_jar)"
   [[ -n "$jar" && -f "$jar" ]] || die "No boot jar found in build/libs; run without --no-build."
-  log "Starting hub from $(basename "$jar") (profile: ${PROFILE}, port: ${APP_PORT}) ..."
+  local java_opts=()
+  if [[ "${DEBUG_JVM}" == "true" ]]; then
+    java_opts+=("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${DEBUG_SUSPEND},address=*:${DEBUG_PORT}")
+    log "Starting hub from $(basename "$jar") (profile: ${PROFILE}, port: ${APP_PORT}, debug: ${DEBUG_PORT}, suspend: ${DEBUG_SUSPEND}) ..."
+  else
+    log "Starting hub from $(basename "$jar") (profile: ${PROFILE}, port: ${APP_PORT}) ..."
+  fi
   # exec keeps the JVM as the script's process so SIGTERM triggers Spring's graceful shutdown.
-  exec java -jar "$jar" "--spring.profiles.active=${PROFILE}"
+  exec java "${java_opts[@]}" -jar "$jar" "--spring.profiles.active=${PROFILE}"
 }
 
 wait_for_app() {
@@ -190,8 +217,14 @@ run_jar_detached() {
 
   mkdir -p "$LOG_DIR"
   local log_file="$LOG_DIR/hub-$(date +%Y%m%d-%H%M%S).log"
-  log "Starting hub detached (profile: ${PROFILE}, port: ${APP_PORT}); logs -> ${log_file}"
-  nohup java -jar "$jar" "--spring.profiles.active=${PROFILE}" >"$log_file" 2>&1 &
+  local java_opts=()
+  if [[ "${DEBUG_JVM}" == "true" ]]; then
+    java_opts+=("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${DEBUG_SUSPEND},address=*:${DEBUG_PORT}")
+    log "Starting hub detached (profile: ${PROFILE}, port: ${APP_PORT}, debug: ${DEBUG_PORT}, suspend: ${DEBUG_SUSPEND}); logs -> ${log_file}"
+  else
+    log "Starting hub detached (profile: ${PROFILE}, port: ${APP_PORT}); logs -> ${log_file}"
+  fi
+  nohup java "${java_opts[@]}" -jar "$jar" "--spring.profiles.active=${PROFILE}" >"$log_file" 2>&1 &
   local pid=$!
   printf '%s\n' "$pid" > "$PID_FILE"
   wait_for_app
@@ -207,6 +240,7 @@ if $DRY_RUN; then
   log "  build first    = ${BUILD}"
   log "  detach         = ${DETACH}"
   log "  app port       = ${APP_PORT}"
+  log "  debug jvm      = ${DEBUG_JVM} (port ${DEBUG_PORT}, suspend ${DEBUG_SUSPEND})"
   log "  db user        = ${SPRING_DATASOURCE_USERNAME:-<from properties>}"
   log "  shutdown token = $([[ -n "${HUB_SHUTDOWN_TOKEN:-}" ]] && echo set || echo 'not set (endpoint disabled)')"
   exit 0

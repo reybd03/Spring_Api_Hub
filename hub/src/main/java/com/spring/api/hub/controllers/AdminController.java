@@ -6,6 +6,7 @@ package com.spring.api.hub.controllers;
 
 import com.spring.api.hub.admin.AdminService;
 import com.spring.api.hub.lifecycle.GracefulShutdownCoordinator;
+import com.spring.api.hub.lifecycle.InFlightRequestTracker;
 import com.spring.api.hub.lifecycle.ShutdownProperties;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -38,21 +41,38 @@ public class AdminController {
     private final AdminService adminService;
     private final JdbcTemplate jdbcTemplate;
     private final GracefulShutdownCoordinator shutdownCoordinator;
+    private final InFlightRequestTracker requestTracker;
     private final ShutdownProperties shutdownProperties;
     private final RestTemplate restTemplate;
     private final String managementPort;
+    private final String actuatorBasePath;
 
     public AdminController(AdminService adminService, JdbcTemplate jdbcTemplate,
                            GracefulShutdownCoordinator shutdownCoordinator,
+                           InFlightRequestTracker requestTracker,
                            ShutdownProperties shutdownProperties,
                            @Value("${server.port:8082}") String serverPort,
-                           @Value("${management.server.port:${server.port:8082}}") String managementPort) {
+                           @Value("${management.server.port:${server.port:8082}}") String managementPort,
+                           @Value("${management.endpoints.web.base-path:/actuator}") String actuatorBasePath) {
         this.adminService = adminService;
         this.jdbcTemplate = jdbcTemplate;
         this.shutdownCoordinator = shutdownCoordinator;
+        this.requestTracker = requestTracker;
         this.shutdownProperties = shutdownProperties;
         this.restTemplate = new RestTemplate();
         this.managementPort = managementPort;
+        this.actuatorBasePath = normaliseBasePath(actuatorBasePath);
+    }
+
+    private static String normaliseBasePath(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return "/actuator";
+        }
+        String trimmed = configured.trim();
+        while (trimmed.endsWith("/") && trimmed.length() > 1) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 
     @GetMapping
@@ -112,18 +132,18 @@ public class AdminController {
      */
     @PostMapping("/shutdown")
     @ResponseBody
-    public Map<String, Object> initiateShutdown() {
+    public ResponseEntity<Map<String, Object>> initiateShutdown() {
         String token = shutdownProperties.shutdownToken();
         if (token == null || token.isBlank()) {
             log.warn("Shutdown attempted but no shutdown token is configured");
-            return Map.of(
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
                     "success", false,
                     "message", "Shutdown token not configured. Set platform.shutdown.shutdown-token to enable shutdown."
-            );
+            ));
         }
 
         try {
-            String shutdownUrl = "http://localhost:" + managementPort + "/actuator/shutdown";
+            String shutdownUrl = "http://localhost:" + managementPort + actuatorBasePath + "/shutdown";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set(ShutdownProperties.TOKEN_HEADER, token);
@@ -137,24 +157,24 @@ public class AdminController {
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Shutdown initiated successfully");
-                return Map.of(
+                return ResponseEntity.ok(Map.of(
                         "success", true,
                         "message", "Graceful shutdown initiated. Traffic draining in progress."
-                );
-            } else {
-                log.error("Shutdown endpoint returned: {}", response.getStatusCode());
-                return Map.of(
-                        "success", false,
-                        "message", "Shutdown endpoint returned: " + response.getStatusCode()
-                );
+                ));
             }
+
+            log.error("Shutdown endpoint returned: {}", response.getStatusCode());
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                    "success", false,
+                    "message", "Shutdown endpoint returned: " + response.getStatusCode()
+            ));
 
         } catch (Exception e) {
             log.error("Failed to initiate shutdown", e);
-            return Map.of(
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
                     "success", false,
                     "message", "Failed to initiate shutdown: " + e.getMessage()
-            );
+            ));
         }
     }
 
@@ -164,13 +184,24 @@ public class AdminController {
     @GetMapping("/shutdown/status")
     @ResponseBody
     public Map<String, Object> getShutdownStatus() {
-        // We can check if the coordinator has started draining
-        // The actual detailed status comes from the actuator/shutdown/status endpoint
-        // but we can provide basic info here
+        boolean draining = shutdownCoordinator.isDraining() || requestTracker.isDraining();
+        boolean complete = shutdownCoordinator.isComplete();
+
         return Map.of(
-                "draining", false, // Would need to expose this from coordinator
+                "draining", draining,
+                "complete", complete,
+                "inFlightRequests", requestTracker.getInFlightCount(),
                 "drainTimeoutMs", shutdownProperties.drainTimeout().toMillis(),
-                "tokenConfigured", shutdownProperties.hasToken()
+                "progressPercent", progressPercent(draining, complete, requestTracker.getInFlightCount()),
+                "tokenConfigured", shutdownProperties.hasToken(),
+                "timestamp", Instant.now().toString()
         );
+    }
+
+    private static int progressPercent(boolean draining, boolean complete, int inFlight) {
+        if (complete) return 100;
+        if (!draining) return 0;
+        if (inFlight == 0) return 95;
+        return Math.min(90, 10 + (inFlight * 5));
     }
 }
