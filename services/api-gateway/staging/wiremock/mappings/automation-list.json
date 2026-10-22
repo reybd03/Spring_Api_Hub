@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/automation"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "[{\"id\":1,\"productName\":\"Jenkins\",\"productDiscoveryStatus\":\"Completed\",\"productDiscovered\":true,\"productBasePath\":\"/var/lib/jenkins\",\"productUserName\":\"admin\",\"productPassword\":\"password\",\"productAPIKey\":\"api-token\",\"productURL\":\"http://localhost\",\"productPort\":\"8080\",\"productProcessId\":12345,\"productStatus\":\"Running\",\"productFunctions\":\"Build,Test,Deploy\",\"productActions\":\"Jobs,Nodes,Pipelines\"}]",
+    "transformers": ["response-template"]
+  }
+}

@@ -1,2 +1,15 @@
 # Agent OS Standards Index
 
+css:
+  theming:
+    description: CSS variable theming with light/dark modes persisted in localStorage
+
+frontend:
+  accessibility:
+    description: Modal focus trap, screen-reader announcements, sr-only helper
+  js-module:
+    description: Vanilla JS IIFE module pattern with cached DOM refs
+  shutdown-banner:
+    description: Shutdown drain banner UX and transactional form disabling
+  thymeleaf-fragments:
+    description: Shared Thymeleaf layout fragments and context-relative resources

@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'staging'
+    service: 'api-gateway'
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8080']
+    scrape_interval: 10s
+
+  - job_name: 'automation-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['automation-service:8080']
+    scrape_interval: 10s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+remote_write:
+  - url: "http://prometheus-pushgateway:9091/api/v1/write"
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: '.*_total|.*_count|.*_sum'
+        action: keep

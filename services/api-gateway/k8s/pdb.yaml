@@ -1,0 +1,42 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway
+  namespace: production
+  labels:
+    app: api-gateway
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-green
+  namespace: production
+  labels:
+    app: api-gateway
+    env: green
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+      env: green
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-blue
+  namespace: production
+  labels:
+    app: api-gateway
+    env: blue
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+      env: blue

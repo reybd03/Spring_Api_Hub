@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/jenkins/stream/sys-stats"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive"
+    },
+    "body": "data: {\"uptime\":\"00:00:01:30\",\"systemCpuLoad\":\"12.34%\",\"processCpuLoad\":\"5.67%\",\"totalMemory\":\"2 GB\",\"freeMemory\":\"1 GB\",\"usedMemory\":\"1 GB\"}\n\n",
+    "transformers": ["response-template"]
+  }
+}

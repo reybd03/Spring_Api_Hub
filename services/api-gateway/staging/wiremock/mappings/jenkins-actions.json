@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/jenkins/actions"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"status\":\"Success\",\"message\":\"Action executed successfully\"}",
+    "transformers": ["response-template"]
+  }
+}

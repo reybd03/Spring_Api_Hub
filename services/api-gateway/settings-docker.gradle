@@ -1,0 +1,16 @@
+// Docker-specific settings.gradle for api-gateway build
+// Only includes api-gateway and its shared dependencies
+
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'api-platform'
+
+// Only include required projects for api-gateway build
+include 'services:api-gateway'
+include 'shared:common-dto'
+include 'shared:common-security'

@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/jenkins/discover"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"productName\":\"Jenkins\",\"productDiscovered\":true,\"productDiscoveryStatus\":\"Completed\",\"productBasePath\":\"/var/lib/jenkins\"}",
+    "transformers": ["response-template"]
+  }
+}

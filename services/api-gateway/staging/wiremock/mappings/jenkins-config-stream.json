@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/jenkins/stream/config"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive"
+    },
+    "body": "data: {\"productName\":\"Jenkins\",\"productDiscovered\":true,\"productDiscoveryStatus\":\"Completed\",\"productBasePath\":\"/var/lib/jenkins\"}\n\n",
+    "transformers": ["response-template"]
+  }
+}

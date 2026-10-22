@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/jenkins/config"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"productName\":\"Jenkins\",\"productDiscovered\":true,\"productDiscoveryStatus\":\"Completed\",\"productBasePath\":\"/var/lib/jenkins\",\"productUserName\":\"admin\",\"productPassword\":\"password\",\"productAPIKey\":\"api-token\",\"productURL\":\"http://localhost\",\"productPort\":\"8080\"}",
+    "transformers": ["response-template"]
+  }
+}

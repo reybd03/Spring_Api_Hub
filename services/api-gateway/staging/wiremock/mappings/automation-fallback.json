@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/v1/automation"
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"timestamp\":\"2026-10-22T00:00:00Z\",\"status\":503,\"error\":\"Service Unavailable\",\"message\":\"Automation service is temporarily unavailable\"}",
+    "transformers": ["response-template"]
+  }
+}
